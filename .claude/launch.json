@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Static site (index.html)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "Sync API server",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["sync_server.py"],
+      "port": 3000
+    }
+  ]
+}
