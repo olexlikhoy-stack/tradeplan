@@ -755,11 +755,10 @@
   </div>
 
   <div class="tabs" id="tabs">
-    <button class="tab active" data-phase="morning" onclick="switchPhase('morning',this)">09:00 Утро</button>
-    <button class="tab" data-phase="day" onclick="switchPhase('day',this)">12:00 День</button>
-    <button class="tab" data-phase="premarket" onclick="switchPhase('premarket',this)">16:30 Премаркет</button>
-    <button class="tab" data-phase="trading" onclick="switchPhase('trading',this)">17:00 Торговля</button>
-    <button class="tab" data-phase="review" onclick="switchPhase('review',this)">20:00 Разбор</button>
+    <button class="tab active" data-phase="morning" onclick="switchPhase('morning',this)">09:00</button>
+    <button class="tab" data-phase="day" onclick="switchPhase('day',this)">12:00</button>
+    <button class="tab" data-phase="trading" onclick="switchPhase('trading',this)">17:00</button>
+    <button class="tab" data-phase="review" onclick="switchPhase('review',this)">20:00</button>
   </div>
 
   <div class="reset-row">
@@ -818,40 +817,8 @@
       </div>
     </div>
 
-    <div class="phase" id="phase-premarket">
-      <div class="section-label">Премаркет США</div>
-      <div class="item" onclick="toggle(this,'p1')">
-        <div class="cb"><svg class="check-svg" width="12" height="9" viewBox="0 0 10 8" fill="none"><polyline points="1,4 3.5,6.5 9,1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="item-body">
-          <div class="item-text">Посмотреть фьючерсы S&amp;P, Nasdaq, VIX</div>
-          <div class="item-sub">Общий сентимент рынка</div>
-        </div>
-      </div>
-      <div class="item" onclick="toggle(this,'p2')">
-        <div class="cb"><svg class="check-svg" width="12" height="9" viewBox="0 0 10 8" fill="none"><polyline points="1,4 3.5,6.5 9,1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="item-body">
-          <div class="item-text">Сверить план с реальностью рынка</div>
-          <div class="item-sub">Актуальны ли сетапы из утреннего плана?</div>
-        </div>
-      </div>
-      <div class="item fomo" onclick="toggle(this,'p3')">
-        <div class="cb"><svg class="check-svg" width="12" height="9" viewBox="0 0 10 8" fill="none"><polyline points="1,4 3.5,6.5 9,1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="item-body">
-          <div class="item-text">Выставить алерты, не смотреть в экран <span class="fomo-badge">FOMO</span></div>
-          <div class="item-sub">Пусть рынок сам придёт к уровню</div>
-        </div>
-      </div>
-    </div>
-
     <div class="phase" id="phase-trading">
       <div class="section-label">Открытие и торговля</div>
-      <div class="item fomo" onclick="toggle(this,'t1')">
-        <div class="cb"><svg class="check-svg" width="12" height="9" viewBox="0 0 10 8" fill="none"><polyline points="1,4 3.5,6.5 9,1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="item-body">
-          <div class="item-text">Первые 15 минут — только наблюдать <span class="fomo-badge">FOMO</span></div>
-          <div class="item-sub">Открытие даёт ложные движения. Дать рынку «определиться»</div>
-        </div>
-      </div>
       <div class="item" onclick="toggle(this,'t2')">
         <div class="cb"><svg class="check-svg" width="12" height="9" viewBox="0 0 10 8" fill="none"><polyline points="1,4 3.5,6.5 9,1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
@@ -864,13 +831,6 @@
         <div class="item-body">
           <div class="item-text">Проверить лимит потерь после каждой сделки</div>
           <div class="item-sub">Достиг лимита → закрыть терминал до завтра</div>
-        </div>
-      </div>
-      <div class="item fomo" onclick="toggle(this,'t4')">
-        <div class="cb"><svg class="check-svg" width="12" height="9" viewBox="0 0 10 8" fill="none"><polyline points="1,4 3.5,6.5 9,1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="item-body">
-          <div class="item-text">Порыв войти из FOMO — пауза 5 минут <span class="fomo-badge">FOMO</span></div>
-          <div class="item-sub">Написать: «Почему хочу войти? Это в плане?»</div>
         </div>
       </div>
     </div>
@@ -1053,7 +1013,7 @@ function updateThemeBtn() {
   icon.textContent = document.body.classList.contains('dark') ? '☾' : '☀';
 }
 
-const TOTAL = 16;
+const TOTAL = document.querySelectorAll('.item').length;
 let selectedMood = null;
 let entries = JSON.parse(localStorage.getItem('tp_entries') || '[]');
 let checkedItems = JSON.parse(localStorage.getItem('tp_checked') || '{}');
