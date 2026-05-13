@@ -476,10 +476,14 @@
   }
   .save-btn:active { transform: scale(0.98); }
 
-  .delete-btn {
+  .entry-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .delete-btn, .edit-btn {
     font-family: var(--mono);
     font-size: 10px;
-    color: rgba(255,71,87,0.4);
     background: none;
     border: none;
     cursor: pointer;
@@ -487,7 +491,30 @@
     letter-spacing: 0.06em;
     transition: color 0.15s;
   }
+  .delete-btn { color: rgba(255,71,87,0.4); }
   .delete-btn:hover { color: var(--red); }
+  .edit-btn { color: var(--muted); }
+  .edit-btn:hover { color: var(--text); }
+
+  .sync-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .sync-btn {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sync-btn:active { transform: scale(0.97); }
 
   .empty-state {
     text-align: center;
@@ -717,7 +744,8 @@
     .stat-sub { font-size: 12px; }
     .chart-title { font-size: 12px; }
     .empty-state { font-size: 15px; }
-    .delete-btn { font-size: 12px; }
+    .delete-btn, .edit-btn { font-size: 12px; }
+    .sync-btn { font-size: 13px; padding: 12px; }
     .bar-lbl { font-size: 10px; }
     .mood-name { font-size: 13px; }
     .mood-count { font-size: 13px; }
@@ -942,6 +970,13 @@
       <div class="chart-title">Эмоции во время сделок</div>
       <div class="mood-stats" id="mood-stats"></div>
     </div>
+
+    <div class="section-label" style="margin-top:20px;margin-bottom:12px">Синхронизация</div>
+    <div class="sync-row">
+      <button class="sync-btn" onclick="exportData()">ЭКСПОРТ</button>
+      <button class="sync-btn" onclick="document.getElementById('import-file').click()">ИМПОРТ</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
   </div>
 </div>
 
@@ -1120,14 +1155,23 @@ function switchView(v) {
 }
 
 // MODAL
-function openModal() {
-  document.getElementById('f-ticker').value = '';
-  document.getElementById('f-pnl').value = '';
-  document.getElementById('f-note').value = '';
-  document.getElementById('f-dir').value = 'long';
-  document.getElementById('f-planned').value = 'yes';
-  selectedMood = null;
-  document.querySelectorAll('.mood-chip').forEach(c => c.className = 'mood-chip');
+let editingId = null;
+
+function openModal(id) {
+  editingId = id || null;
+  const e = id ? entries.find(x => x.id === id) : null;
+  document.getElementById('f-ticker').value = e ? e.ticker : '';
+  document.getElementById('f-pnl').value = e ? e.pnl : '';
+  document.getElementById('f-note').value = e ? (e.note || '') : '';
+  document.getElementById('f-dir').value = e ? e.dir : 'long';
+  document.getElementById('f-planned').value = e ? e.planned : 'yes';
+  selectedMood = e ? e.mood : null;
+  document.querySelectorAll('.mood-chip').forEach(c => {
+    c.className = 'mood-chip';
+    if (e && c.dataset.mood === e.mood) c.className = 'mood-chip selected-' + e.mood;
+  });
+  document.querySelector('.modal-title').textContent = e ? 'РЕДАКТИРОВАТЬ' : 'НОВАЯ СДЕЛКА';
+  document.querySelector('.save-btn').textContent = e ? 'СОХРАНИТЬ ИЗМЕНЕНИЯ' : 'СОХРАНИТЬ СДЕЛКУ';
   document.getElementById('modal').classList.add('open');
   setTimeout(() => document.getElementById('f-ticker').focus(), 350);
 }
@@ -1151,12 +1195,19 @@ function saveTrade() {
   const planned = document.getElementById('f-planned').value;
   const note = document.getElementById('f-note').value.trim();
   if (!ticker) { document.getElementById('f-ticker').focus(); return; }
-  const entry = {
-    id: Date.now(),
-    date: new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'short'}),
-    ticker, pnl, dir, planned, mood: selectedMood, note
-  };
-  entries.unshift(entry);
+  if (editingId) {
+    const idx = entries.findIndex(e => e.id === editingId);
+    if (idx !== -1) {
+      entries[idx] = { ...entries[idx], ticker, pnl, dir, planned, mood: selectedMood, note };
+    }
+  } else {
+    entries.unshift({
+      id: Date.now(),
+      date: new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'short'}),
+      ticker, pnl, dir, planned, mood: selectedMood, note
+    });
+  }
+  editingId = null;
   localStorage.setItem('tp_entries', JSON.stringify(entries));
   document.getElementById('modal').classList.remove('open');
   renderEntries();
@@ -1189,7 +1240,10 @@ function renderEntries() {
         ${e.mood ? `<span style="font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:20px;background:${moodColors[e.mood]}22;color:${moodColors[e.mood]};border:1px solid ${moodColors[e.mood]}44;">${moodLabels[e.mood]||e.mood}</span>` : ''}
       </div>
       ${e.note ? `<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px;">${e.note}</div>` : ''}
-      <button class="delete-btn" onclick="deleteTrade(${e.id})">УДАЛИТЬ</button>
+      <div class="entry-actions">
+        <button class="edit-btn" onclick="openModal(${e.id})">ИЗМЕНИТЬ</button>
+        <button class="delete-btn" onclick="deleteTrade(${e.id})">УДАЛИТЬ</button>
+      </div>
     </div>
   `).join('');
 }
@@ -1241,6 +1295,49 @@ function renderStats() {
       <div class="mood-count">${cnt}</div>
     </div>`;
   }).join('');
+}
+
+// Export / Import
+function exportData() {
+  const data = { entries, checkedItems, theme: localStorage.getItem('tp_theme') || 'dark' };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tradeplan-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.entries) {
+        const existing = new Set(entries.map(x => x.id));
+        data.entries.forEach(x => { if (!existing.has(x.id)) entries.push(x); });
+        entries.sort((a, b) => b.id - a.id);
+        localStorage.setItem('tp_entries', JSON.stringify(entries));
+      }
+      if (data.checkedItems) {
+        Object.assign(checkedItems, data.checkedItems);
+        localStorage.setItem('tp_checked', JSON.stringify(checkedItems));
+        document.querySelectorAll('.item').forEach(el => {
+          const id = el.getAttribute('onclick').match(/'([^']+)'\)/)?.[1];
+          if (id && checkedItems[id]) el.classList.add('done');
+        });
+        updateProgress();
+      }
+      renderEntries();
+      renderStats();
+      alert('Импорт завершён: ' + entries.length + ' сделок');
+    } catch (_) { alert('Ошибка: неверный формат файла'); }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
 }
 
 // Service Worker
