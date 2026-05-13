@@ -1112,6 +1112,7 @@ function toggle(el, id) {
   checkedItems[id] = el.classList.contains('done');
   localStorage.setItem('tp_checked', JSON.stringify(checkedItems));
   updateProgress();
+  syncPush();
   if (el.classList.contains('done')) {
     el.style.transform = 'scale(0.97)';
     setTimeout(() => el.style.transform = '', 100);
@@ -1131,6 +1132,7 @@ function resetAll() {
   localStorage.setItem('tp_checked', JSON.stringify(checkedItems));
   document.querySelectorAll('.item.done').forEach(el => el.classList.remove('done'));
   updateProgress();
+  syncPush();
 }
 
 function switchPhase(phase, btn) {
@@ -1211,6 +1213,7 @@ function saveTrade() {
   localStorage.setItem('tp_entries', JSON.stringify(entries));
   document.getElementById('modal').classList.remove('open');
   renderEntries();
+  syncPush();
 }
 
 function deleteTrade(id) {
@@ -1218,6 +1221,7 @@ function deleteTrade(id) {
   localStorage.setItem('tp_entries', JSON.stringify(entries));
   renderEntries();
   renderStats();
+  syncPush();
 }
 
 const moodLabels = { calm:'Спокоен', confident:'Уверен', anxious:'Тревога', fomo:'FOMO', revenge:'Месть' };
@@ -1296,6 +1300,48 @@ function renderStats() {
     </div>`;
   }).join('');
 }
+
+// Sync
+const SYNC_URL = 'http://66.151.41.29:3000/api/sync';
+const SYNC_TOKEN = 'tradeplan2026';
+
+async function syncPull() {
+  try {
+    const res = await fetch(SYNC_URL, {
+      headers: { 'Authorization': 'Bearer ' + SYNC_TOKEN }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.entries && data.entries.length) {
+      const local = new Map(entries.map(e => [e.id, e]));
+      data.entries.forEach(e => { if (!local.has(e.id)) entries.push(e); });
+      entries.sort((a, b) => b.id - a.id);
+      localStorage.setItem('tp_entries', JSON.stringify(entries));
+    }
+    if (data.checkedItems) {
+      Object.assign(checkedItems, data.checkedItems);
+      localStorage.setItem('tp_checked', JSON.stringify(checkedItems));
+      document.querySelectorAll('.item').forEach(el => {
+        const id = el.getAttribute('onclick').match(/'([^']+)'\)/)?.[1];
+        if (id && checkedItems[id]) el.classList.add('done');
+      });
+      updateProgress();
+    }
+    renderEntries();
+  } catch (_) {}
+}
+
+async function syncPush() {
+  try {
+    await fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SYNC_TOKEN },
+      body: JSON.stringify({ entries, checkedItems })
+    });
+  } catch (_) {}
+}
+
+syncPull();
 
 // Export / Import
 function exportData() {
